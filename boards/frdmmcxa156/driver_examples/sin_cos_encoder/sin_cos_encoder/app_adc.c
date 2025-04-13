@@ -17,6 +17,11 @@
 /* ADC result values storage */
 static adc_results_t adcResults;
 
+/* Fast conversion command configuration */
+static lpadc_conv_command_config_t cmdConfigFast0;
+static lpadc_conv_command_config_t cmdConfigFast1;
+static lpadc_conv_trigger_config_t triggerConfigFast;
+
 /* ADC configuration helper function */
 static void ConfigureADC(ADC_Type *base, uint32_t channel0, uint32_t channel1, uint32_t channel2)
 {
@@ -27,11 +32,11 @@ static void ConfigureADC(ADC_Type *base, uint32_t channel0, uint32_t channel1, u
     LPADC_GetDefaultConvCommandConfig(&cmdConfig);
     
     cmdConfig.conversionResolutionMode = kLPADC_ConversionResolutionHigh;
-    cmdConfig.hardwareAverageMode = kLPADC_HardwareAverageCount2;
+    cmdConfig.hardwareAverageMode = ADC_HW_AVERAGE_MODE;
     
     /* Command 1 - Channel 0 */
     cmdConfig.channelNumber = channel0;
-    cmdConfig.chainedNextCommandNumber = 2U; // Chain to command 2
+    cmdConfig.chainedNextCommandNumber = 2; // Chain to command 2
     LPADC_SetConvCommandConfig(base, 1U, &cmdConfig);
     
     /* Command 2 - Channel 1 */
@@ -48,7 +53,52 @@ static void ConfigureADC(ADC_Type *base, uint32_t channel0, uint32_t channel1, u
     LPADC_GetDefaultConvTriggerConfig(&triggerConfig);
     triggerConfig.targetCommandId = 1U;      // Target first command
     triggerConfig.enableHardwareTrigger = true;
-    LPADC_SetConvTriggerConfig(base, ADC_TRIGGER_ID, &triggerConfig);
+    LPADC_SetConvTriggerConfig(base, ADC_NORMAL_TRIGGER_ID, &triggerConfig);
+}
+
+void APP_ADC_EnableHW_Trigger(ADC_Type *base, uint8_t trid_id, bool enable)
+{
+    if(enable)
+    {
+        base->TCTRL[trid_id] |= ADC_TCTRL_HTEN_MASK;
+    }
+    else
+    {
+        base->TCTRL[trid_id] &= ~ADC_TCTRL_HTEN_MASK;
+    }
+}
+
+/* Configure fast conversion commands (only channel 0) */
+static void ConfigureFastConversion(void)
+{
+    /* Configure fast command for ADC0 - Channel 0 only */
+    LPADC_GetDefaultConvCommandConfig(&cmdConfigFast0);
+    cmdConfigFast0.channelNumber = ADC0_CHANNEL0;
+    cmdConfigFast0.conversionResolutionMode = kLPADC_ConversionResolutionHigh;
+    cmdConfigFast0.hardwareAverageMode = ADC_HW_AVERAGE_MODE;
+    cmdConfigFast0.chainedNextCommandNumber = 0U; // No chaining
+    LPADC_SetConvCommandConfig(ADC0, 4U, &cmdConfigFast0); // Use command ID 4 for fast conversion
+    
+    /* Configure fast command for ADC1 - Channel 0 only */
+    LPADC_GetDefaultConvCommandConfig(&cmdConfigFast1);
+    cmdConfigFast1.channelNumber = ADC1_CHANNEL0;
+    cmdConfigFast1.conversionResolutionMode = kLPADC_ConversionResolutionHigh;
+    cmdConfigFast1.hardwareAverageMode = ADC_HW_AVERAGE_MODE;
+    cmdConfigFast1.chainedNextCommandNumber = 0U; // No chaining
+    LPADC_SetConvCommandConfig(ADC1, 4U, &cmdConfigFast1); // Use command ID 4 for fast conversion
+    
+    /* Configure fast trigger (using trigger ID 1) */
+    LPADC_GetDefaultConvTriggerConfig(&triggerConfigFast);
+    triggerConfigFast.targetCommandId = 4U;      // Target fast command
+    triggerConfigFast.enableHardwareTrigger = true;
+    LPADC_SetConvTriggerConfig(ADC0, ADC_FAST_TRIGGER_ID, &triggerConfigFast);
+    LPADC_SetConvTriggerConfig(ADC1, ADC_FAST_TRIGGER_ID, &triggerConfigFast);
+    
+    /* Configure additional INPUTMUX for fast trigger */
+    INPUTMUX_Init(INPUTMUX0);
+    INPUTMUX_AttachSignal(INPUTMUX0, 1, kINPUTMUX_ArmTxevToAdc0Trigger);
+    INPUTMUX_AttachSignal(INPUTMUX0, 1, kINPUTMUX_ArmTxevToAdc1Trigger);
+    INPUTMUX_Deinit(INPUTMUX0);
 }
 
 void ADC_Init(void)
@@ -66,8 +116,8 @@ void ADC_Init(void)
     /* Set clock source and divider for ADC0 and ADC1 */
     CLOCK_SetClockDiv(kCLOCK_DivADC0, 1U);
     CLOCK_SetClockDiv(kCLOCK_DivADC1, 1U);
-    CLOCK_AttachClk(kFRO12M_to_ADC0);
-    CLOCK_AttachClk(kFRO12M_to_ADC1);
+    CLOCK_AttachClk(kCLK_IN_to_ADC0);
+    CLOCK_AttachClk(kCLK_IN_to_ADC1);
 
     /* Initialize INPUTMUX */
     INPUTMUX_Init(INPUTMUX0);
@@ -84,6 +134,7 @@ void ADC_Init(void)
     adcConfigStruct.enableAnalogPreliminary = true;
     adcConfigStruct.powerLevelMode = kLPADC_PowerLevelAlt4;
     adcConfigStruct.referenceVoltageSource = kLPADC_ReferenceVoltageAlt3; /* VDDA */
+    adcConfigStruct.conversionAverageMode = kLPADC_ConversionAverage1024; 
     
     /* Initialize both ADCs with the same configuration */
     LPADC_Init(ADC0, &adcConfigStruct);
@@ -98,11 +149,30 @@ void ADC_Init(void)
     
     /* Configure ADC1 channels and command chain */
     ConfigureADC(ADC1, ADC1_CHANNEL0, ADC1_CHANNEL1, ADC1_CHANNEL2);
+    
+    /* Configure fast conversion commands */
+    ConfigureFastConversion();
+
+    /* Get hardware average count as string */
+    const char *hwAvgStr;
+    switch(ADC_HW_AVERAGE_MODE) {
+        case kLPADC_HardwareAverageCount1:  hwAvgStr = "1 sample"; break;
+        case kLPADC_HardwareAverageCount2:  hwAvgStr = "2 samples"; break;
+        case kLPADC_HardwareAverageCount4:  hwAvgStr = "4 samples"; break;
+        case kLPADC_HardwareAverageCount8:  hwAvgStr = "8 samples"; break;
+        case kLPADC_HardwareAverageCount16: hwAvgStr = "16 samples"; break;
+        case kLPADC_HardwareAverageCount32: hwAvgStr = "32 samples"; break;
+        case kLPADC_HardwareAverageCount64: hwAvgStr = "64 samples"; break;
+        case kLPADC_HardwareAverageCount128: hwAvgStr = "128 samples"; break;
+        default: hwAvgStr = "Unknown"; break;
+    }
 
     PRINTF("ADC initialization complete\r\n");
     PRINTF("ADC0 channels: %d, %d, %d\r\n", ADC0_CHANNEL0, ADC0_CHANNEL1, ADC0_CHANNEL2);
     PRINTF("ADC1 channels: %d, %d, %d\r\n", ADC1_CHANNEL0, ADC1_CHANNEL1, ADC1_CHANNEL2);
+    PRINTF("Hardware average: %s\r\n", hwAvgStr);
     PRINTF("ADC resolution: 16-bit\r\n");
+    PRINTF("Fast conversion configured for channels %d and %d\r\n", ADC0_CHANNEL0, ADC1_CHANNEL0);
 }
 
 void ADC_StartConversion(void)
@@ -113,6 +183,7 @@ void ADC_StartConversion(void)
     /* Generate ARM_TXEV to trigger both ADCs simultaneously */
     __SEV();
 }
+
 
 /* Helper function to get ADC results */
 static void GetADCResults(ADC_Type *base, lpadc_conv_result_t *results)
@@ -141,14 +212,34 @@ const adc_results_t* ADC_GetLatestResults(void)
     return &adcResults;
 }
 
-bool ADC_IsDataReady(void)
-{
-    return adcResults.dataReady;
-}
 
-void ADC_ClearDataReadyFlag(void)
+/* Start fast conversion and wait for results using direct register access */
+adc_fast_result_t ADC_StartAndGetFastResults(void)
 {
-    adcResults.dataReady = false;
+    __SEV();
+    
+    adc_fast_result_t result = {0};
+    uint32_t tmp32;
+    
+    /* Get ADC0 channel 0 result - direct register access */
+    while (1) {
+        tmp32 = ADC0->RESFIFO;
+        if ((tmp32 & ADC_RESFIFO_VALID_MASK) == ADC_RESFIFO_VALID_MASK) {
+            break; /* Valid data available */
+        }
+    }
+    result.adc0Value = (uint16_t)(tmp32 & ADC_RESFIFO_D_MASK);
+    
+    /* Get ADC1 channel 0 result - direct register access */
+    while (1) {
+        tmp32 = ADC1->RESFIFO;
+        if ((tmp32 & ADC_RESFIFO_VALID_MASK) == ADC_RESFIFO_VALID_MASK) {
+            break; /* Valid data available */
+        }
+    }
+    result.adc1Value = (uint16_t)(tmp32 & ADC_RESFIFO_D_MASK);
+    
+    return result;
 }
 
 int ADC_ShowResult(const adc_results_t *results, char *buffer, size_t bufferSize)

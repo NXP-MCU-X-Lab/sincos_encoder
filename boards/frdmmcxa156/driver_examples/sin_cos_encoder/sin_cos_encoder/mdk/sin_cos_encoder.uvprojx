@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>tj_yk_encoder</TargetName>
+      <TargetName>sin_cos_encoder</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pCCUsed>6190000::V6.19::ARMCLANG</pCCUsed>
@@ -134,11 +134,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4101</DriverSelection>
+            <DriverSelection>4102</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2V8M.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -314,7 +314,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>0</interw>
-            <Optim>2</Optim>
+            <Optim>0</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -340,7 +340,7 @@
               <MiscControls>-fno-common  -fdata-sections  -fno-builtin  -mthumb</MiscControls>
               <Define>DEBUG, CPU_MCXA156VLL, MCUXPRESSO_SDK SDK_DEBUGCONSOLE_UART</Define>
               <Undefine></Undefine>
-              <IncludePath>..;../../../..;../../../../../../devices/MCXA156/drivers;../../../../../../components/uart;../../../../../../components/lists;../../../../../../devices/MCXA156;../../../../../../devices/MCXA156/utilities/debug_console_lite;../../../../../../CMSIS/Core/Include;../../../../../../devices/MCXA156/utilities/str</IncludePath>
+              <IncludePath>..;../../../..;../../../../../../devices/MCXA156/drivers;../../../../../../components/uart;../../../../../../components/lists;../../../../../../devices/MCXA156;../../../../../../devices/MCXA156/utilities/debug_console_lite;../../../../../../CMSIS/Core/Include;../../../../../../devices/MCXA156/utilities/str;..\..\..\..\..\..\CMSIS\DSP\Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -403,6 +403,72 @@
               <FileName>app_timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\app_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_crc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app_crc.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_atan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app_atan.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>9</RVCTCodeConst>
+                  <RVCTZI>4</RVCTZI>
+                  <RVCTOtherData>4</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>2</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>5</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
+              <FileName>app_eqdc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app_eqdc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -548,6 +614,11 @@
               <FileName>fsl_crc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\devices\MCXA156\drivers\fsl_crc.c</FilePath>
+            </File>
+            <File>
+              <FileName>fsl_eqdc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\devices\MCXA156\drivers\fsl_eqdc.c</FilePath>
             </File>
           </Files>
         </Group>

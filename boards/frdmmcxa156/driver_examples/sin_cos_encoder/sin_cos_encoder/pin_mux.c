@@ -63,7 +63,7 @@ void BOARD_InitPins(void)
     CLOCK_EnableClock(kCLOCK_GatePORT1);
     CLOCK_EnableClock(kCLOCK_GatePORT2);
     CLOCK_EnableClock(kCLOCK_GatePORT3);
-    
+    CLOCK_EnableClock(kCLOCK_GatePORT4);
 
     RESET_ReleasePeripheralReset(kLPUART0_RST_SHIFT_RSTn);
     RESET_ReleasePeripheralReset(kLPUART1_RST_SHIFT_RSTn);
@@ -72,12 +72,13 @@ void BOARD_InitPins(void)
     RESET_ReleasePeripheralReset(kPORT1_RST_SHIFT_RSTn);
     RESET_ReleasePeripheralReset(kPORT2_RST_SHIFT_RSTn);
     RESET_ReleasePeripheralReset(kPORT3_RST_SHIFT_RSTn);
+    RESET_ReleasePeripheralReset(kPORT4_RST_SHIFT_RSTn);
     
     RESET_ReleasePeripheralReset(kGPIO0_RST_SHIFT_RSTn);
     RESET_ReleasePeripheralReset(kGPIO1_RST_SHIFT_RSTn);
     RESET_ReleasePeripheralReset(kGPIO2_RST_SHIFT_RSTn);
     RESET_ReleasePeripheralReset(kGPIO3_RST_SHIFT_RSTn);
-    
+    RESET_ReleasePeripheralReset(kGPIO4_RST_SHIFT_RSTn);
     
     const port_pin_config_t port0_2_pin78_config = {/* Internal pull-up resistor is enabled */
                                                     kPORT_PullUp,
@@ -200,7 +201,138 @@ void BOARD_InitPins(void)
                                                     /* Pin Control Register fields [15:0] are not locked */
                                                     kPORT_UnlockRegister};
     PORT_SetPinConfig(PORT3, 12, &port3_pin12_config);
-                                                    
+                                                
+
+
+    /* EQDC */
+    PORT2->PCR[17] = ((PORT2->PCR[17] &
+                       /* Mask bits to zero which are setting */
+                       (~(PORT_PCR_MUX_MASK | PORT_PCR_IBE_MASK)))
+
+                      /* Pin Multiplex Control: PORT2_17 (pin 38) is configured as TRIG_IN9. */
+                      | PORT_PCR_MUX(1)
+
+                      /* Input Buffer Enable: Enables. */
+                      | PORT_PCR_IBE(1));
+
+    /* PORT3_31 (pin 48) is configured as TRIG_IN10 */
+    PORT_SetPinMux(PORT3, 31U, kPORT_MuxAlt1);
+
+    PORT3->PCR[31] = ((PORT3->PCR[31] &
+                       /* Mask bits to zero which are setting */
+                       (~(PORT_PCR_IBE_MASK)))
+
+                      /* Input Buffer Enable: Enables. */
+                      | PORT_PCR_IBE(1));
+
+    PORT4->PCR[6] = ((PORT4->PCR[6] &
+                      /* Mask bits to zero which are setting */
+                      (~(PORT_PCR_MUX_MASK | PORT_PCR_IBE_MASK)))
+
+                     /* Pin Multiplex Control: PORT4_6 (pin 20) is configured as TRIG_IN4. */
+                     | PORT_PCR_MUX(1)
+
+                     /* Input Buffer Enable: Enables. */
+                     | PORT_PCR_IBE(1));
+                     
+    /* ADC Pin Initialization */
+    /* Configure P2_0 as ADC0_A0 */
+    const port_pin_config_t port2_0_config = {
+        kPORT_PullDisable,           /* Disable internal pull-up/down resistor */
+        kPORT_LowPullResistor,
+        kPORT_FastSlewRate,
+        kPORT_PassiveFilterDisable,
+        kPORT_OpenDrainDisable,
+        kPORT_LowDriveStrength,
+        kPORT_NormalDriveStrength,
+        kPORT_MuxAlt0,               /* Pin is configured as ADC0_A0 */
+        kPORT_InputBufferDisable,    /* Digital input disabled; required for analog functions */
+        kPORT_InputNormal,
+        kPORT_UnlockRegister
+    };
+    PORT_SetPinConfig(PORT2, 0U, &port2_0_config);
+
+    /* Configure P2_1 as ADC0_A1 */
+    const port_pin_config_t port2_1_config = {
+        kPORT_PullDisable,
+        kPORT_LowPullResistor,
+        kPORT_FastSlewRate,
+        kPORT_PassiveFilterDisable,
+        kPORT_OpenDrainDisable,
+        kPORT_LowDriveStrength,
+        kPORT_NormalDriveStrength,
+        kPORT_MuxAlt0,               /* Pin is configured as ADC0_A1 */
+        kPORT_InputBufferDisable,    /* Digital input disabled; required for analog functions */
+        kPORT_InputNormal,
+        kPORT_UnlockRegister
+    };
+    PORT_SetPinConfig(PORT2, 1U, &port2_1_config);
+
+    /* Configure P2_2 as ADC0_A4 */
+    const port_pin_config_t port2_2_config = {
+        kPORT_PullDisable,
+        kPORT_LowPullResistor,
+        kPORT_FastSlewRate,
+        kPORT_PassiveFilterDisable,
+        kPORT_OpenDrainDisable,
+        kPORT_LowDriveStrength,
+        kPORT_NormalDriveStrength,
+        kPORT_MuxAlt0,               /* Pin is configured as ADC0_A4 */
+        kPORT_InputBufferDisable,    /* Digital input disabled; required for analog functions */
+        kPORT_InputNormal,
+        kPORT_UnlockRegister
+    };
+    PORT_SetPinConfig(PORT2, 2U, &port2_2_config);
+
+    /* Configure P2_3 as ADC1_A4 */
+    const port_pin_config_t port2_3_config = {
+        kPORT_PullDisable,
+        kPORT_LowPullResistor,
+        kPORT_FastSlewRate,
+        kPORT_PassiveFilterDisable,
+        kPORT_OpenDrainDisable,
+        kPORT_LowDriveStrength,
+        kPORT_NormalDriveStrength,
+        kPORT_MuxAlt0,               /* Pin is configured as ADC1_A4 */
+        kPORT_InputBufferDisable,    /* Digital input disabled; required for analog functions */
+        kPORT_InputNormal,
+        kPORT_UnlockRegister
+    };
+    PORT_SetPinConfig(PORT2, 3U, &port2_3_config);
+
+    /* Configure P2_4 as ADC1_A0 */
+    const port_pin_config_t port2_4_config = {
+        kPORT_PullDisable,
+        kPORT_LowPullResistor,
+        kPORT_FastSlewRate,
+        kPORT_PassiveFilterDisable,
+        kPORT_OpenDrainDisable,
+        kPORT_LowDriveStrength,
+        kPORT_NormalDriveStrength,
+        kPORT_MuxAlt0,               /* Pin is configured as ADC1_A0 */
+        kPORT_InputBufferDisable,    /* Digital input disabled; required for analog functions */
+        kPORT_InputNormal,
+        kPORT_UnlockRegister
+    };
+    PORT_SetPinConfig(PORT2, 4U, &port2_4_config);
+
+    /* Configure P2_5 as ADC1_A1 */
+    const port_pin_config_t port2_5_config = {
+        kPORT_PullDisable,
+        kPORT_LowPullResistor,
+        kPORT_FastSlewRate,
+        kPORT_PassiveFilterDisable,
+        kPORT_OpenDrainDisable,
+        kPORT_LowDriveStrength,
+        kPORT_NormalDriveStrength,
+        kPORT_MuxAlt0,               /* Pin is configured as ADC1_A1 */
+        kPORT_InputBufferDisable,    /* Digital input disabled; required for analog functions */
+        kPORT_InputNormal,
+        kPORT_UnlockRegister
+    };
+    PORT_SetPinConfig(PORT2, 5U, &port2_5_config);
+
+
 }
 /***********************************************************************************************************************
  * EOF

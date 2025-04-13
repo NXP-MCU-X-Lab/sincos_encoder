@@ -59,7 +59,7 @@ void LPUART1_Init(uint32_t baudRate)
     
     /* Configure clock source and divider for high speed */
     CLOCK_SetClockDiv(kCLOCK_DivLPUART1, 1U);
-    CLOCK_AttachClk(kFRO_HF_DIV_to_LPUART1);
+    CLOCK_AttachClk(kCLK_IN_to_LPUART1);
     
     /* Get default configuration */
     LPUART_GetDefaultConfig(&config);
