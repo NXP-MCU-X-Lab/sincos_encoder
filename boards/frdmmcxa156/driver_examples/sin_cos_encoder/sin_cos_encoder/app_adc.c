@@ -114,10 +114,10 @@ void ADC_Init(void)
     RESET_ReleasePeripheralReset(kADC1_RST_SHIFT_RSTn);
 
     /* Set clock source and divider for ADC0 and ADC1 */
-    CLOCK_SetClockDiv(kCLOCK_DivADC0, 1U);
-    CLOCK_SetClockDiv(kCLOCK_DivADC1, 1U);
-    CLOCK_AttachClk(kCLK_IN_to_ADC0);
-    CLOCK_AttachClk(kCLK_IN_to_ADC1);
+    CLOCK_SetClockDiv(kCLOCK_DivADC0, 2U);
+    CLOCK_SetClockDiv(kCLOCK_DivADC1, 2U);
+    CLOCK_AttachClk(kFRO_HF_to_ADC0);
+    CLOCK_AttachClk(kFRO_HF_to_ADC1);
 
     /* Initialize INPUTMUX */
     INPUTMUX_Init(INPUTMUX0);
@@ -168,6 +168,8 @@ void ADC_Init(void)
     }
 
     PRINTF("ADC initialization complete\r\n");
+    PRINTF("ADC0 clock:%dHz\r\n", CLOCK_GetAdcClkFreq(0));
+    PRINTF("ADC1 clock:%dHz\r\n", CLOCK_GetAdcClkFreq(1));
     PRINTF("ADC0 channels: %d, %d, %d\r\n", ADC0_CHANNEL0, ADC0_CHANNEL1, ADC0_CHANNEL2);
     PRINTF("ADC1 channels: %d, %d, %d\r\n", ADC1_CHANNEL0, ADC1_CHANNEL1, ADC1_CHANNEL2);
     PRINTF("Hardware average: %s\r\n", hwAvgStr);

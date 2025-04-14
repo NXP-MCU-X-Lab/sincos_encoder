@@ -119,14 +119,33 @@ Available commands:
 > 
 ```
 
-快速ADC测试:
+ADC测试(6通道)
+
+```
+--- ADC DEMO ---
+
+ADC0 Results:
+Channel 0 - Value: 1474, CmdID: 1
+Channel 1 - Value: 499, CmdID: 2
+Channel 4 - Value: 6959, CmdID: 3
+
+ADC1 Results:
+Channel 4 - Value: 2286, CmdID: 2
+Channel 0 - Value: 1667, CmdID: 3
+Channel 1 - Value: 3202, CmdID: 4
+
+
+ADC Conversion Time: 8.7 us
+```
+
+快速ADC测试(2通道)
 
 ```
 --- FAST ADC DEMO ---
-ADC0 Channel 0 Value: 3480
-ADC1 Channel 4 Value: 7314
+ADC0 Channel 0 Value: 2112
+ADC1 Channel 4 Value: 5078
 
-Fast ADC Conversion Time: 3.7 us
+Fast ADC Conversion Time: 2.6 us
 ```
 
 硬件CRC:
@@ -191,5 +210,4 @@ Standard atan2: 13227.3 us
 Fast atan2:     9451.8 us
 Speed improvement: 1.4x
 ```
-
 
