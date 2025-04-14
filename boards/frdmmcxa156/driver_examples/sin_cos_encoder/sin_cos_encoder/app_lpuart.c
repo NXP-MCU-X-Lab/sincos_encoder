@@ -5,91 +5,103 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include <stdio.h>
+
 #include "app_lpuart.h"
 #include "fsl_clock.h"
 #include "fsl_lpuart.h"
+#include "fsl_lpuart_edma.h"
 
-/* Receive buffer */
-#define RX_BUFFER_SIZE 64
-static uint8_t rxBuffer[RX_BUFFER_SIZE];
-static volatile uint32_t rxIndex = 0;
 
-/* LPUART1 interrupt handler */
-void LPUART1_IRQHandler(void)
+#define LPUART_TX_DMA_CHANNEL       0U
+#define LPUART_RX_DMA_CHANNEL       1U
+#define DEMO_LPUART_TX_EDMA_CHANNEL kDma0RequestLPUART1Tx
+#define DEMO_LPUART_RX_EDMA_CHANNEL kDma0RequestLPUART1Rx
+#define ECHO_BUFFER_LENGTH 8
+
+
+/* LPUART user callback */
+void LPUART_UserCallback(LPUART_Type *base, lpuart_edma_handle_t *handle, status_t status, void *userData);
+
+lpuart_edma_handle_t g_lpuartEdmaHandle;
+static edma_handle_t g_lpuartTxEdmaHandle;
+static edma_handle_t g_lpuartRxEdmaHandle;
+static lpuart_transfer_t receiveXfer;
+    
+    
+AT_NONCACHEABLE_SECTION_INIT(uint8_t g_tipString[]) = "LPUART EDMA example\r\nSend back received data\r\nEcho every 8 characters\r\n";
+AT_NONCACHEABLE_SECTION_INIT(uint8_t g_rxBuffer[ECHO_BUFFER_LENGTH]) = {0};
+
+void LPUART_UserCallback(LPUART_Type *base, lpuart_edma_handle_t *handle, status_t status, void *userData)
 {
-    uint8_t data;
-    
-    /* Check if receive interrupt */
-    if ((kLPUART_RxDataRegFullFlag) & LPUART_GetStatusFlags(LPUART1))
+    userData = userData;
+
+    if (kStatus_LPUART_TxIdle == status)
     {
-        /* Read received data */
-        data = LPUART_ReadByte(LPUART1);
-        
-        /* Echo received data immediately */
-        LPUART_WriteByte(LPUART1, data);
-        
-        /* Store to receive buffer */
-        if (rxIndex < RX_BUFFER_SIZE)
-        {
-            rxBuffer[rxIndex++] = data;
-        }
-        
-        /* Reset buffer if newline received */
-        if (data == '\r' || data == '\n')
-        {
-            rxIndex = 0;
-        }
+        printf("dma tx complete\r\n");
     }
-    
-    /* Handle errors */
-    uint32_t status = LPUART_GetStatusFlags(LPUART1);
-    if (status & (kLPUART_RxOverrunFlag | kLPUART_NoiseErrorFlag | 
-                 kLPUART_FramingErrorFlag | kLPUART_ParityErrorFlag))
+
+    if (kStatus_LPUART_RxIdle == status)
     {
-        /* Clear error flags */
-        LPUART_ClearStatusFlags(LPUART1, status & (kLPUART_RxOverrunFlag | 
-                               kLPUART_NoiseErrorFlag | kLPUART_FramingErrorFlag | 
-                               kLPUART_ParityErrorFlag));
+        printf("rx data, size:%d\r\n", ECHO_BUFFER_LENGTH);
+        
+        LPUART_ReceiveEDMA(LPUART1, &g_lpuartEdmaHandle, &receiveXfer);
     }
 }
 
+
 void LPUART1_Init(uint32_t baudRate)
 {
-    lpuart_config_t config;
+    lpuart_config_t lpuartConfig;
+    edma_config_t edmaConfig = {0};
+    lpuart_transfer_t sendXfer;
     
     /* Configure clock source and divider for high speed */
     CLOCK_SetClockDiv(kCLOCK_DivLPUART1, 1U);
     CLOCK_AttachClk(kCLK_IN_to_LPUART1);
     
+    RESET_ReleasePeripheralReset(kDMA_RST_SHIFT_RSTn);
+    
     /* Get default configuration */
-    LPUART_GetDefaultConfig(&config);
+    LPUART_GetDefaultConfig(&lpuartConfig);
     
     /* Configure for high speed */
-    config.baudRate_Bps = baudRate;
-    config.enableTx = true;
-    config.enableRx = true;
+    lpuartConfig.baudRate_Bps = baudRate;
+    lpuartConfig.enableTx = true;
+    lpuartConfig.enableRx = true;
     
     /* Initialize LPUART1 */
-    LPUART_Init(LPUART1, &config, CLOCK_GetLpuartClkFreq(1));
+    LPUART_Init(LPUART1, &lpuartConfig, CLOCK_GetLpuartClkFreq(1));
     
-    /* Enable RX interrupt */
-    LPUART_EnableInterrupts(LPUART1, kLPUART_RxDataRegFullInterruptEnable);
+    /* Init the EDMA module */
+    EDMA_GetDefaultConfig(&edmaConfig);
+    EDMA_Init(DMA0, &edmaConfig);
     
-    /* Enable NVIC interrupt */
-    EnableIRQ(LPUART1_IRQn);
-    
-    /* Reset receive buffer */
-    rxIndex = 0;
+    EDMA_CreateHandle(&g_lpuartTxEdmaHandle, DMA0, LPUART_TX_DMA_CHANNEL);
+    EDMA_CreateHandle(&g_lpuartRxEdmaHandle, DMA0, LPUART_RX_DMA_CHANNEL);
+
+    EDMA_SetChannelMux(DMA0, LPUART_TX_DMA_CHANNEL, DEMO_LPUART_TX_EDMA_CHANNEL);
+    EDMA_SetChannelMux(DMA0, LPUART_RX_DMA_CHANNEL, DEMO_LPUART_RX_EDMA_CHANNEL);
+
+    /* Create LPUART DMA handle. */
+    LPUART_TransferCreateHandleEDMA(LPUART1, &g_lpuartEdmaHandle, LPUART_UserCallback, NULL, &g_lpuartTxEdmaHandle, &g_lpuartRxEdmaHandle);
+                                    
+    /* Start to echo. */
+    receiveXfer.data     = g_rxBuffer;
+    receiveXfer.dataSize = ECHO_BUFFER_LENGTH;
+
+    LPUART_ReceiveEDMA(LPUART1, &g_lpuartEdmaHandle, &receiveXfer);
 }
 
 void LPUART1_SendData(const uint8_t *data, uint32_t length)
 {
-    /* Send data using blocking method */
-    LPUART_WriteBlocking(LPUART1, data, length);
+    lpuart_transfer_t sendXfer;
+    sendXfer.data        = (void*)data;
+    sendXfer.dataSize    = length;
+    LPUART_SendEDMA(LPUART1, &g_lpuartEdmaHandle, &sendXfer);
+    
+//    /* Send data using blocking method */
+//    LPUART_WriteBlocking(LPUART1, data, length);
 }
 
-uint32_t LPUART1_GetClockFreq(void)
-{
-    /* Get LPUART1 clock frequency */
-    return CLOCK_GetLpuartClkFreq(1);
-}
+

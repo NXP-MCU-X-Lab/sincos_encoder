@@ -620,6 +620,21 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\devices\MCXA156\drivers\fsl_eqdc.c</FilePath>
             </File>
+            <File>
+              <FileName>fsl_edma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\devices\MCXA156\drivers\fsl_edma.c</FilePath>
+            </File>
+            <File>
+              <FileName>fsl_edma_soc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\devices\MCXA156\drivers\fsl_edma_soc.c</FilePath>
+            </File>
+            <File>
+              <FileName>fsl_lpuart_edma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\devices\MCXA156\drivers\fsl_lpuart_edma.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

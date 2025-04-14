@@ -182,14 +182,11 @@ int main(void)
                     /* Initialize LPUART1 with high baudrate */
                     LPUART1_Init(2.5*1000*1000);
                 
-                    printf("UART1: %d Hz\r\n", LPUART1_GetClockFreq());
+                    printf("UART1: %d Hz\r\n", CLOCK_GetLpuartClkFreq(1));
                     printf("LPUART1 initialized for high-speed operation\r\n");
                 
-                    TIMER_Start();
                     LPUART1_SendData(txbuff, sizeof(txbuff) - 1);
-                    float uartTime = TIMER_Stop();
                     printf("UART test message sent\r\n");
-                    printf("Transmission Time: %.1f us\r\n", uartTime);
                     break;
                 case 't':
                     /* TAMAGAWA CRC DEMO */

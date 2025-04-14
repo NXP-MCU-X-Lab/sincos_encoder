@@ -26,11 +26,5 @@ void LPUART1_Init(uint32_t baudRate);
  */
 void LPUART1_SendData(const uint8_t *data, uint32_t length);
 
-/**
- * @brief Get LPUART1 clock frequency
- * 
- * @return Clock frequency in Hz
- */
-uint32_t LPUART1_GetClockFreq(void);
 
 #endif /* _APP_LPUART_H_ */

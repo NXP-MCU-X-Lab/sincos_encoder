@@ -1,8 +1,8 @@
-# MCXA156 光编码器演示应用
+# MCX A154光编码器演示应用
 
 ## 概述
 
-该演示程序实现了多个关键模块，包括高速ADC采样、多摩川协议串口配置、CRC校验、ATAN2计算优化以及EQDC正交解码等功能。程序基于NXP MCXA156微控制器开发板设计，展示了该芯片的多种高级功能。
+该演示程序实现了多个关键模块，包括高速ADC采样、多摩川协议串口配置、CRC校验、ATAN2计算优化以及EQDC正交解码等功能。程序基于NXP MCXA154微控制器开发板设计，展示了该芯片的多种高级功能。
 
 MDK工程位置: `sincos_encoder\boards\frdmmcxa156\driver_examples\sin_cos_encoder\sin_cos_encoder`
 
@@ -11,7 +11,7 @@ MDK工程位置: `sincos_encoder\boards\frdmmcxa156\driver_examples\sin_cos_enco
 系统使用外部20MHz晶振，并通过FRO自动校准实现高精度时钟源。主要时钟配置：
 
 - 内核时钟: 96MHz
-- ADC时钟: 直接使用外部20MHz晶振作为输入时钟
+- ADC时钟: 内部 FRO48MHz 作为输入时钟
 - UART时钟: 直接使用外部20MHz晶振作为输入时钟
 - 定时器时钟: 96MHz，用于高精度计时
 
@@ -55,7 +55,7 @@ ATAN2优化实现使用多项式近似法，相比标准库函数提供了显著
 
 - 支持2.5Mbps波特率配置
 - 外部20MHz晶振作为时钟输入，可以完美分频出2.5Mbps波特率(无计算误差)
-- 使用LPUART1，引脚P3_21(TX)和P3_20(RX)
+- 使用LPUART1，引脚P3_21(TX)和P3_20(RX), 使用SDK的 DMA uart example.
 
 ### EQDC正交解码
 
@@ -104,7 +104,7 @@ Hardware average: 1 sample
 ADC resolution: 16-bit
 Fast conversion configured for channels 0 and 4
 CoreClock: 96000000 Hz
-MCXA156 Demo Application
+MCX A154Demo Application
 Core System Clocks:
   Core Clock:     96000000 Hz ( 96 MHz)
   Bus Clock:      96000000 Hz ( 96 MHz)
