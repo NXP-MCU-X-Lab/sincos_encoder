@@ -314,7 +314,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>0</interw>
-            <Optim>0</Optim>
+            <Optim>5</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -388,11 +388,6 @@
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\main.c</FilePath>
-            </File>
-            <File>
-              <FileName>app_adc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\app_adc.c</FilePath>
             </File>
             <File>
               <FileName>app_lpuart.c</FileName>
@@ -469,6 +464,16 @@
               <FileName>app_eqdc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\app_eqdc.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_adc_dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app_adc_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_adc_single.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app_adc_single.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -634,6 +639,11 @@
               <FileName>fsl_lpuart_edma.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\devices\MCXA156\drivers\fsl_lpuart_edma.c</FilePath>
+            </File>
+            <File>
+              <FileName>fsl_lptmr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\devices\MCXA156\drivers\fsl_lptmr.c</FilePath>
             </File>
           </Files>
         </Group>

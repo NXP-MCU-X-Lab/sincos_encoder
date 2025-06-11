@@ -10,7 +10,7 @@
 #include "fsl_inputmux.h"
 #include "fsl_clock.h"
 #include "fsl_reset.h"
-#include "app_adc.h"
+#include "app_adc_single.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -101,7 +101,7 @@ static void ConfigureFastConversion(void)
     INPUTMUX_Deinit(INPUTMUX0);
 }
 
-void ADC_Init(void)
+void ADC_Single_Init(void)
 {
     lpadc_config_t adcConfigStruct;
     
@@ -177,7 +177,7 @@ void ADC_Init(void)
     PRINTF("Fast conversion configured for channels %d and %d\r\n", ADC0_CHANNEL0, ADC1_CHANNEL0);
 }
 
-void ADC_StartConversion(void)
+void ADC_StartSingleConversion(void)
 {
     /* Clear data ready flag before starting new conversion */
     adcResults.dataReady = false;
@@ -244,7 +244,7 @@ adc_fast_result_t ADC_StartAndGetFastResults(void)
     return result;
 }
 
-int ADC_ShowResult(const adc_results_t *results, char *buffer, size_t bufferSize)
+int ADC_SingleShowResult(const adc_results_t *results, char *buffer, size_t bufferSize)
 {
     int written = 0;
     uint32_t channelNumbers[2][ADC_CHANNEL_COUNT] = {

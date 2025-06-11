@@ -1,4 +1,4 @@
-# MCX A154光编码器演示应用
+# MCX A15x ADC及其他外设典型演示应用
 
 ## 概述
 
@@ -22,16 +22,32 @@ MDK工程位置: `sincos_encoder\boards\frdmmcxa156\driver_examples\sin_cos_enco
 
 ## 功能模块
 
-### ADC采样
+### ADC软件触发采样
 
 - 同时使用两个ADC控制器(ADC0和ADC1)进行同步采样
   - ADC0: 通道0、1、4
   - ADC1: 通道4、0、1
   - 对应引脚: P2_0至P2_5
+  
 - 支持硬件平均采样，可通过`app_adc.h`中的`ADC_HW_AVERAGE_MODE`宏定义调整
+
 - 支持链式命令配置，实现多通道顺序采样
+
 - 提供快速转换模式，仅采样特定通道以提高性能
+
 - 支持硬件触发，可通过ARM TXEV事件同步触发
+
+### DMA+ADC+TIMER定时采样测试
+
+- 使用LPTMR0作为定时触发源，支持可配置采样率
+- EDMA自动搬运ADC数据到内存缓冲区
+- 支持128个样本的连续采样
+- 默认配置6.4kHz采样率，实现20ms内完成128个样本采集
+- 硬件配置：
+  - ADC: ADC0通道0 (P2_0)
+  - 定时器: LPTMR0
+  - DMA: DMA0通道2
+  - 缓冲区: 128个32位样本，32字节对齐
 
 ### 多摩川协议CRC校验
 
@@ -77,7 +93,8 @@ ATAN2优化实现使用多项式近似法，相比标准库函数提供了显著
 该演示程序采用模块化设计，主要组件包括：
 
 - `main.c`: 主程序入口，初始化各个模块并处理用户命令
-- `app_adc.c/h`: ADC配置和采样功能
+- `app_adc_single.c/h`: 单点ADC配置和采样功能
+- `app_adc_dma.c/h`: 定时器触发采样ADC+DMA搬运功能实现
 - `app_atan.c/h`: ATAN2优化实现和基准测试
 - `app_crc.c/h`: 多摩川协议CRC-8实现和测试
 - `app_lpuart.c/h`: 高速UART通信
@@ -95,19 +112,15 @@ ATAN2优化实现使用多项式近似法，相比标准库函数提供了显著
    - `u` - UART演示
    - `t` - 多摩川CRC演示
    - `n` - ATAN2性能测试
+   - `d` - ADC+DMA+LPTMR 定时触发ADC+ DMA搬运演示.
 
 ```
-ADC initialization complete
-ADC0 channels: 0, 1, 4
-ADC1 channels: 4, 0, 1
-Hardware average: 1 sample
-ADC resolution: 16-bit
-Fast conversion configured for channels 0 and 4
-CoreClock: 96000000 Hz
-MCX A154Demo Application
+MCXA156 Demo Application
 Core System Clocks:
   Core Clock:     96000000 Hz ( 96 MHz)
   Bus Clock:      96000000 Hz ( 96 MHz)
+  kCLOCK_FroHf:      96000000 Hz ( 96 MHz)
+  kCLOCK_FroHfDiv:      96000000 Hz ( 96 MHz)
 ========================
 Available commands:
   a - ADC Demo
@@ -116,6 +129,7 @@ Available commands:
   t - Tamagawa CRC Demo
   n - ATAN2 Benchmark
   e - EQDC Encoder Demo
+  d - DMA ADC Demo (128 samples in 20ms)
 > 
 ```
 
@@ -146,6 +160,34 @@ ADC0 Channel 0 Value: 2112
 ADC1 Channel 4 Value: 5078
 
 Fast ADC Conversion Time: 2.6 us
+```
+
+LPTMR触发定时器+DMA搬运
+
+```
+--- DMA ADC TIMER trigger DEMO ---
+
+Fast ADC Conversion Time: 20.0 ms
+
+=== ADC Results (Rate: 6400Hz) ===
+Samples: 128
+    3     4    11    20    27    19    14     9 
+   12     9    13    11    18    17    13    16 
+   21    19     6     3    12    14     6     0 
+   14    12    20    17    17    14     9    11 
+   12    18    20    24    16    16     4     9 
+   21     9    17    24    11    17     9    14 
+   17     7    18    10     9    11    13    27 
+   22     9     3    18     6     8     6    14 
+    8    11    16     0    13    17    22    16 
+   10    24    26    12     3     7    16    28 
+   17     9    19     0    18    13    17    14 
+   10    13     9    30    21     8     9    13 
+    9     2     8    26    17     9    22     3 
+   20     4    17    26     5     7    10    12 
+   11     8    18    17     8    17    19    13 
+   17     9    12     8    12    14     9    26 
+===============================
 ```
 
 硬件CRC:

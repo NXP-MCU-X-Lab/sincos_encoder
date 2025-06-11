@@ -51,8 +51,8 @@ typedef struct {
 } adc_fast_result_t;
 
 /* Function prototypes */
-void ADC_Init(void);
-void ADC_StartConversion(void);
+void ADC_Single_Init(void);
+void ADC_StartSingleConversion(void);
 
 /**
  * @brief Update ADC results and return pointer to results
@@ -76,7 +76,7 @@ const adc_results_t* ADC_GetLatestResults(void);
  * @param bufferSize Size of the output buffer
  * @return int Number of characters written to buffer (excluding null terminator), or negative value on error
  */
-int ADC_ShowResult(const adc_results_t *results, char *buffer, size_t bufferSize);
+int ADC_SingleShowResult(const adc_results_t *results, char *buffer, size_t bufferSize);
 
 
 /**

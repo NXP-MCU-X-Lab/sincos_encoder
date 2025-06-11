@@ -15,12 +15,12 @@
 #include "fsl_inputmux.h"
 
 #include "app_lpuart.h"
-#include "app_adc.h"
 #include "app_timer.h"
 #include "app_crc.h"
 #include "app_atan.h"
 #include "app_eqdc.h"
-
+#include "app_adc_dma.h"
+#include "app_adc_single.h"
 
 /* Test message */
 static uint8_t txbuff[] = "LPUART1 high speed test\r\n";
@@ -84,6 +84,8 @@ int main(void)
 {
     uint32_t freq;
     
+    float elapsed_time_us;
+    
     /* Trim FRO for high-speed accuracy */
     app_FircAutoTrim(20*1000*1000);
     
@@ -92,18 +94,12 @@ int main(void)
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
     
-    /* Initialize ADC */
-    ADC_Init();
-    
     /* Initialize LED */
     LED_Init();
     
     /* Initialize SysTick for 10Hz interrupt */
     SysTick_Init();
 
-    /* Print debug info */
-    printf("CoreClock: %d Hz\r\n", CLOCK_GetCoreSysClkFreq());
-    
     /* Initialize high precision timer */
     TIMER_Init();
     
@@ -114,6 +110,12 @@ int main(void)
 
     freq = CLOCK_GetFreq(kCLOCK_BusClk);
     printf("  Bus Clock:      %8u Hz (%3u MHz)\r\n", freq, freq / 1000000U);
+    
+    freq = CLOCK_GetFreq(kCLOCK_FroHf);
+    printf("  kCLOCK_FroHf:      %8u Hz (%3u MHz)\r\n", freq, freq / 1000000U);
+
+    freq = CLOCK_GetFreq(kCLOCK_FroHfDiv);
+    printf("  kCLOCK_FroHfDiv:      %8u Hz (%3u MHz)\r\n", freq, freq / 1000000U);
     printf("========================\r\n");
     printf("Available commands:\r\n");
     printf("  a - ADC Demo\r\n");
@@ -122,6 +124,7 @@ int main(void)
     printf("  t - Tamagawa CRC Demo\r\n");
     printf("  n - ATAN2 Benchmark\r\n");
     printf("  e - EQDC Encoder Demo\r\n");
+    printf("  d - DMA ADC Demo (128 samples in 20ms)\r\n");
     printf("> ");
     
 
@@ -135,23 +138,25 @@ int main(void)
             {
                 case 'a':
                     /* ADC DEMO */
-                    printf("\r\n--- ADC DEMO ---\r\n");
+                    printf("\r\n--- ADC single converion demo ---\r\n");
                     {
+                        /* Initialize ADC */
+                        ADC_Single_Init();
+                        
                         const adc_results_t *results;
                         char resultBuffer[ADC_RESULT_STRING_MAX_LEN];
-                        float conversionTime;
                         
                         APP_ADC_EnableHW_Trigger(ADC0, ADC_NORMAL_TRIGGER_ID, true);
                         APP_ADC_EnableHW_Trigger(ADC0, ADC_FAST_TRIGGER_ID, false);
                         
                         TIMER_Start();
-                        ADC_StartConversion();
+                        ADC_StartSingleConversion();
                         results = ADC_UpdateAndGetResults();
-                        conversionTime = TIMER_Stop();
+                        elapsed_time_us = TIMER_Stop();
                         
-                        ADC_ShowResult(results, resultBuffer, sizeof(resultBuffer));
+                        ADC_SingleShowResult(results, resultBuffer, sizeof(resultBuffer));
                         printf("\r\n%s\r\n", resultBuffer);
-                        printf("\r\nADC Conversion Time: %.1f us\r\n", conversionTime);
+                        printf("\r\nADC Conversion Time: %.1f us\r\n", elapsed_time_us);
                     }
                     break;
                     
@@ -160,21 +165,44 @@ int main(void)
                     printf("\r\n--- FAST ADC DEMO ---\r\n");
                     {
                         adc_fast_result_t fastResult;
-                        float fastConversionTime;
                         
                         APP_ADC_EnableHW_Trigger(ADC0, ADC_NORMAL_TRIGGER_ID, false);
                         APP_ADC_EnableHW_Trigger(ADC0, ADC_FAST_TRIGGER_ID, true);
                         
                         TIMER_Start();
                         fastResult = ADC_StartAndGetFastResults();
-                        fastConversionTime = TIMER_Stop();
+                        elapsed_time_us = TIMER_Stop();
                         
                         printf("ADC0 Channel %d Value: %d\r\n", ADC0_CHANNEL0, fastResult.adc0Value);
                         printf("ADC1 Channel %d Value: %d\r\n", ADC1_CHANNEL0, fastResult.adc1Value);
-                        printf("\r\nFast ADC Conversion Time: %.1f us\r\n", fastConversionTime);
+                        printf("Fast ADC Conversion Time: %.1f us\r\n", elapsed_time_us);
                     }
                     break;
+                    case 'd':
+                        /* DMA ADC Timer Demo */
+                        printf("\r\n--- DMA ADC TIMER trigger DEMO ---\r\n");
+
+                        ADC_DMA_Timer_Init();
+                        ADC_DMA_Timer_SetSampleRate(6400); /* 6.4kHz for 128 samples in ~20ms */
+                        
+                        /* Record start time */
+                        TIMER_Start();
                     
+                        /* Start sampling */
+                        ADC_DMA_Timer_StartTransfer();
+                    
+                        /* Wait for completion */
+                        while (!ADC_DMA_Timer_IsComplete()) {
+                            __NOP();
+                        }
+                        
+                        /* Calculate elapsed time */
+                        elapsed_time_us = TIMER_Stop();
+                        printf("ADC Conversion Time: %.1f ms\r\n", elapsed_time_us / 1000);
+                        
+                        /* Show results */
+                        ADC_DMA_Timer_PrintResults();
+                        break;
                 case 'u':
                     /* UART DEMO */
                     printf("\r\n--- UART DEMO ---\r\n");
